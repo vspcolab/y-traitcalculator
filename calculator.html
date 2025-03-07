@@ -1,0 +1,2085 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Calculator - AVAV Yogic Traits</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Chart.js Library -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- jsPDF Library for PDF Download -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <!-- D3.js Libraries -->
+  <script src="https://d3js.org/d3.v6.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/d3-sankey@0.12.3/dist/d3-sankey.min.js"></script>
+  <style>
+    body { background-color: #f8f9fa; font-family: Arial, sans-serif; }
+    .container { max-width: 1100px; margin: auto; }
+    .navbar { margin-bottom: 20px; }
+    h2, h3 { text-align: center; color: #0d6efd; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 14px; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: left; vertical-align: middle; }
+    th { background-color: #f4f4f4; }
+    .options { display: flex; flex-wrap: wrap; gap: 4px; }
+    .result, .insights { font-weight: bold; margin-top: 20px; padding: 10px; background: #e2e3e5; border: 1px solid #ccc; }
+    button { margin-top: 20px; padding: 10px 20px; font-size: 16px; background-color: #0d6efd; color: #fff; border: none; cursor: pointer; }
+    button:hover { background-color: #0b5ed7; }
+    input[type="text"] { width: 90%; padding: 4px; font-size: 13px; }
+    canvas { margin-top: 20px; display: block; margin-left: auto; margin-right: auto; }
+    .chart-container { display: flex; flex-wrap: wrap; justify-content: space-around; gap: 20px; }
+    .chart-box { flex: 1; min-width: 300px; }
+    .enhancements, .classification-guide { margin-top: 40px; }
+    .enhancements ul, .classification-guide ul { list-style: disc; margin-left: 20px; }
+    .color-high { color: green; }
+    .color-mid { color: orange; }
+    .color-low { color: red; }
+    .heatmap-table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    .heatmap-table th, .heatmap-table td { border: 1px solid #ccc; padding: 8px; text-align: center; }
+    .interpretation { font-size: 14px; padding: 8px; background: #fff; border: 1px solid #ccc; margin-top: 5px; }
+    .insights-section { padding: 15px; background: #f1f1f1; border: 1px solid #ccc; margin-top: 20px; border-radius: 8px; }
+  </style>
+</head>
+<body>
+  <!-- Navigation Bar -->
+  <nav class="navbar navbar-expand-lg navbar-light bg-light">
+    <div class="container">
+      <a class="navbar-brand" href="index.html">AVAV Yogic Traits</a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav ms-auto">
+          <li class="nav-item"><a class="nav-link" href="index.html">Home</a></li>
+          <li class="nav-item"><a class="nav-link active" href="calculator.html">Calculator</a></li>
+          <li class="nav-item"><a class="nav-link" href="about.html">About</a></li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+  
+  <div class="container">
+    <h2>AVAV Yogic Traits Calculator</h2>
+    <p>Select a score (1-10) for each parameter and add remarks if needed:</p>
+    <form id="avavForm">
+      <table>
+        <thead>
+          <tr>
+            <th>Category</th>
+            <th>Parameter</th>
+            <th>Criteria</th>
+            <th>Score (1-10)</th>
+            <th>Remarks/Comments</th>
+          </tr>
+        </thead>
+        <tbody id="parametersTable">
+          <!-- Dynamic rows inserted via JavaScript -->
+        </tbody>
+      </table>
+      <button type="button" onclick="calculateScore()">Calculate Score</button>
+      <button type="button" onclick="saveData()">Save Scores</button>
+      <button type="button" onclick="loadData()">Load Scores</button>
+      <button type="button" onclick="downloadCSV()">Download CSV Report</button>
+      <button type="button" onclick="downloadPDF()">Download PDF</button>
+      <button type="button" onclick="window.print()">Print Report</button>
+    </form>
+    
+    <div id="result" class="result"></div>
+    <div id="insights" class="insights"></div>
+    
+    <div class="chart-container">
+      <div class="chart-box"><canvas id="barChart" width="400" height="300"></canvas>
+        <div id="barChartInterpretation" class="interpretation"></div>
+      </div>
+      <div class="chart-box"><canvas id="radarChart" width="400" height="300"></canvas>
+        <div id="radarChartInterpretation" class="interpretation"></div>
+      </div>
+      <div class="chart-box"><canvas id="pieChart" width="400" height="300"></canvas>
+        <div id="pieChartInterpretation" class="interpretation"></div>
+      </div>
+      <div class="chart-box"><canvas id="donutChart" width="400" height="300"></canvas>
+        <div id="donutChartInterpretation" class="interpretation"></div>
+      </div>
+      <div class="chart-box"><canvas id="lineChart" width="400" height="300"></canvas>
+        <div id="lineChartInterpretation" class="interpretation"></div>
+      </div>
+      <div class="chart-box"><canvas id="scatterChart" width="400" height="300"></canvas>
+        <div id="scatterChartInterpretation" class="interpretation"></div>
+      </div>
+    </div>
+    
+    <!-- Additional Visualizations -->
+    <div id="heatmapContainer"></div>
+    <div id="sankeyDiagram" style="margin-top:20px;"></div>
+    <div id="sunburstChart" style="margin-top:20px;"></div>
+    
+    <!-- Personalized Insights Section -->
+    <div id="personalizedInsights" class="insights-section"></div>
+    
+    <!-- Enhancements Section -->
+    <div class="enhancements">
+      <h3>Possible Enhancements</h3>
+      <ul>
+        <li><strong>Weightage System:</strong> Each parameter carries a weight reflecting its importance.</li>
+        <li><strong>Dynamic Insights:</strong> The tool identifies low scoring clusters and recommends improvements.</li>
+        <li><strong>Graphical Visualization:</strong> Multiple charts display strengths and weaknesses from different perspectives.</li>
+        <li><strong>Deep Interpretation:</strong> Detailed analysis is provided for each category.</li>
+        <li><strong>Export Options:</strong> Download your report as CSV or PDF, or print it directly.</li>
+        <li><strong>Data Persistence:</strong> Save and reload your scores using localStorage.</li>
+      </ul>
+    </div>
+    
+    <!-- Classification Guide Section -->
+    <div class="classification-guide">
+      <h3>Parameter Classification Guide (-10 Scale)</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Score</th>
+            <th>Interpretation</th>
+            <th>Description</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>1</td><td>Extremely Poor</td><td>Almost no awareness, effort, or engagement.</td></tr>
+          <tr><td>2</td><td>Very Poor</td><td>Highly inconsistent, neglects practice.</td></tr>
+          <tr><td>3</td><td>Poor</td><td>Occasionally follows good habits but struggles.</td></tr>
+          <tr><td>4</td><td>Below Average</td><td>Inconsistent performance with some effort.</td></tr>
+          <tr><td>5</td><td>Average</td><td>Basic understanding and effort.</td></tr>
+          <tr><td>6</td><td>Slightly Above Average</td><td>Makes a moderate effort, improvements needed.</td></tr>
+          <tr><td>7</td><td>Good</td><td>Regular practice with occasional lapses.</td></tr>
+          <tr><td>8</td><td>Very Good</td><td>Strong consistency, well-aligned with yogic principles.</td></tr>
+          <tr><td>9</td><td>Excellent</td><td>Almost perfect alignment and high awareness.</td></tr>
+          <tr><td>10</td><td>Ideal / Mastery</td><td>Fully aligned and deeply practiced.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  
+  <script>
+    // Global trend data for the line chart.
+    let trendData = [];
+    
+    // Define 40 parameters with category, name, criteria, and weight.
+    const parameters = [
+      // Aahara (Diet & Nutrition) – 10 parameters
+      { category: "Aahara (Diet & Nutrition)", name: "Meal Timing Consistency", criteria: "Regularity of meals in alignment with circadian rhythm", weight: 1.2 },
+      { category: "Aahara (Diet & Nutrition)", name: "Food Variety", criteria: "Varied intake of nutrient-rich foods", weight: 1.0 },
+      { category: "Aahara (Diet & Nutrition)", name: "Hydration & Water Intake", criteria: "Adequate daily water consumption", weight: 1.0 },
+      { category: "Aahara (Diet & Nutrition)", name: "Portion Control", criteria: "Ability to avoid overeating or under-eating", weight: 1.0 },
+      { category: "Aahara (Diet & Nutrition)", name: "Cooking Methods", criteria: "Preference for natural, unprocessed techniques", weight: 1.0 },
+      { category: "Aahara (Diet & Nutrition)", name: "Mindful Eating Practices", criteria: "Conscious eating with gratitude", weight: 1.0 },
+      { category: "Aahara (Diet & Nutrition)", name: "Refined Sugar & Processed Food Intake", criteria: "Minimizing refined sugars and processed foods", weight: 1.0 },
+      { category: "Aahara (Diet & Nutrition)", name: "Meal Composition (Macronutrient Balance)", criteria: "Balanced proportions of proteins, carbs, and fats", weight: 1.2 },
+      { category: "Aahara (Diet & Nutrition)", name: "Seasonal & Local Food Preference", criteria: "Preference for fresh, regional produce", weight: 1.0 },
+      { category: "Aahara (Diet & Nutrition)", name: "Ayurvedic/Yogic Dietary Alignment", criteria: "Adherence to Sattvic, Rajasic, or Tamasic diet", weight: 1.5 },
+      // Vihara (Lifestyle & Daily Routine) – 10 parameters
+      { category: "Vihara (Lifestyle & Daily Routine)", name: "Sleep Quality & Duration", criteria: "Consistent, restorative sleep", weight: 1.5 },
+      { category: "Vihara (Lifestyle & Daily Routine)", name: "Physical Activity & Movement", criteria: "Regular exercise (Yoga, Walking, etc.)", weight: 1.3 },
+      { category: "Vihara (Lifestyle & Daily Routine)", name: "Stress Management Techniques", criteria: "Use of meditation, pranayama, etc.", weight: 1.4 },
+      { category: "Vihara (Lifestyle & Daily Routine)", name: "Work-Life Balance", criteria: "Balanced approach between work and rest", weight: 1.0 },
+      { category: "Vihara (Lifestyle & Daily Routine)", name: "Leisure & Recreation", criteria: "Engagement in hobbies, music, travel, etc.", weight: 1.0 },
+      { category: "Vihara (Lifestyle & Daily Routine)", name: "Exposure to Nature", criteria: "Regular contact with natural elements", weight: 1.0 },
+      { category: "Vihara (Lifestyle & Daily Routine)", name: "Technology Usage & Digital Detox", criteria: "Balanced screen time and digital breaks", weight: 1.0 },
+      { category: "Vihara (Lifestyle & Daily Routine)", name: "Community & Social Connections", criteria: "Quality interactions with family, friends", weight: 1.2 },
+      { category: "Vihara (Lifestyle & Daily Routine)", name: "Routine & Rituals", criteria: "Consistency in daily habits and rituals", weight: 1.0 },
+      { category: "Vihara (Lifestyle & Daily Routine)", name: "Exploration & Learning", criteria: "Curiosity and willingness to learn new things", weight: 1.0 },
+      // Achara (Conduct, Behavior, and Ethics) – 10 parameters
+      { category: "Achara (Conduct, Behavior, and Ethics)", name: "Self-Discipline & Punctuality", criteria: "Maintaining schedules and commitments", weight: 1.5 },
+      { category: "Achara (Conduct, Behavior, and Ethics)", name: "Compassion & Kindness", criteria: "Exhibiting empathy and care towards others", weight: 1.2 },
+      { category: "Achara (Conduct, Behavior, and Ethics)", name: "Honesty & Integrity", criteria: "Truthfulness and ethical behavior", weight: 1.2 },
+      { category: "Achara (Conduct, Behavior, and Ethics)", name: "Conflict Resolution & Communication", criteria: "Effective and peaceful communication", weight: 1.0 },
+      { category: "Achara (Conduct, Behavior, and Ethics)", name: "Spiritual & Ethical Practices", criteria: "Engagement in prayer, rituals, and seva", weight: 1.0 },
+      { category: "Achara (Conduct, Behavior, and Ethics)", name: "Community Service & Volunteering", criteria: "Participation in acts of service", weight: 1.0 },
+      { category: "Achara (Conduct, Behavior, and Ethics)", name: "Minimalism & Detachment", criteria: "Avoidance of material excess", weight: 1.0 },
+      { category: "Achara (Conduct, Behavior, and Ethics)", name: "Respect for Elders, Teachers & Nature", criteria: "Honoring wisdom and traditions", weight: 1.2 },
+      { category: "Achara (Conduct, Behavior, and Ethics)", name: "Personal Boundaries & Energy Management", criteria: "Maintaining personal space and energy", weight: 1.0 },
+      { category: "Achara (Conduct, Behavior, and Ethics)", name: "Leadership & Influence", criteria: "Inspiring others positively", weight: 1.3 },
+      // Vichara (Thought Process & Mental Discipline) – 10 parameters
+      { category: "Vichara (Thought Process & Mental Discipline)", name: "Decision-Making Clarity", criteria: "Making clear, informed decisions", weight: 1.0 },
+      { category: "Vichara (Thought Process & Mental Discipline)", name: "Mindfulness & Self-Awareness", criteria: "Being present and introspective", weight: 1.5 },
+      { category: "Vichara (Thought Process & Mental Discipline)", name: "Emotional Intelligence & Control", criteria: "Managing emotions effectively", weight: 1.5 },
+      { category: "Vichara (Thought Process & Mental Discipline)", name: "Intellectual Curiosity & Learning", criteria: "Eagerness to learn and grow", weight: 1.0 },
+      { category: "Vichara (Thought Process & Mental Discipline)", name: "Resilience & Ability to Handle Failures", criteria: "Bouncing back from setbacks", weight: 1.2 },
+      { category: "Vichara (Thought Process & Mental Discipline)", name: "Perspective-Taking & Empathy", criteria: "Understanding diverse viewpoints", weight: 1.2 },
+      { category: "Vichara (Thought Process & Mental Discipline)", name: "Creativity & Innovation", criteria: "Thinking outside the box", weight: 1.0 },
+      { category: "Vichara (Thought Process & Mental Discipline)", name: "Skepticism vs. Open-Mindedness", criteria: "Balancing critical thinking and openness", weight: 1.0 },
+      { category: "Vichara (Thought Process & Mental Discipline)", name: "Goal-Setting & Vision Clarity", criteria: "Having clear, achievable goals", weight: 1.0 },
+      { category: "Vichara (Thought Process & Mental Discipline)", name: "Optimism & Pessimism Balance", criteria: "Maintaining a positive yet realistic outlook", weight: 1.0 }
+    ];
+    
+    // Dynamically generate table rows.
+    const tableBody = document.getElementById("parametersTable");
+    parameters.forEach((param, index) => {
+      let row = `<tr>
+                  <td>${param.category}</td>
+                  <td>${param.name}</td>
+                  <td>${param.criteria}</td>
+                  <td class="options">`;
+      for (let i = 1; i <= 10; i++) {
+        row += `<label><input type="radio" name="param${index}" value="${i}"> ${i}</label>`;
+      }
+      row += `</td>
+              <td><input type="text" name="remark${index}" placeholder="Comments"></td>
+              </tr>`;
+      tableBody.innerHTML += row;
+    });
+    
+    // Classification function with color coding.
+    function classify(avg) {
+      if (avg >= 7.5) return '<span class="color-high">Sattva</span>';
+      else if (avg >= 5) return '<span class="color-mid">Rajas</span>';
+      else return '<span class="color-low">Tamas</span>';
+    }
+    
+    // Calculate weighted scores, update charts, and generate insights.
+    function calculateScore() {
+      let totalWeighted = 0;
+      let totalWeight = 0;
+      let categoryWeighted = {
+        "Aahara (Diet & Nutrition)": 0,
+        "Vihara (Lifestyle & Daily Routine)": 0,
+        "Achara (Conduct, Behavior, and Ethics)": 0,
+        "Vichara (Thought Process & Mental Discipline)": 0
+      };
+      let scatterData = [];
+      
+      parameters.forEach((param, index) => {
+        const radios = document.getElementsByName("param" + index);
+        let selectedScore = 0;
+        radios.forEach(radio => {
+          if (radio.checked) { selectedScore = parseInt(radio.value); }
+        });
+        scatterData.push({ x: index + 1, y: selectedScore });
+        let weightedScore = selectedScore * param.weight;
+        totalWeighted += weightedScore;
+        totalWeight += (10 * param.weight);
+        categoryWeighted[param.category] += weightedScore;
+      });
+      
+      // Overall weighted average scaled to 10.
+      let overallAvg = (totalWeighted / totalWeight) * 10;
+      let resultText = `<h3>Results</h3>
+                        <p><strong>Total Weighted Score:</strong> ${totalWeighted.toFixed(2)} / ${totalWeight.toFixed(2)}</p>
+                        <p><strong>Overall Classification:</strong> ${classify(overallAvg)} (Weighted Average: ${overallAvg.toFixed(2)})</p>`;
+      
+      let lowestCat = "";
+      let lowestAvg = 11;
+      let categoryAverages = {};
+      Object.keys(categoryWeighted).forEach(cat => {
+        let catTotalWeight = parameters.filter(p => p.category === cat).reduce((sum, p) => sum + p.weight, 0) * 10;
+        let avg = (categoryWeighted[cat] / catTotalWeight) * 10;
+        categoryAverages[cat] = avg;
+        resultText += `<p><strong>${cat}:</strong> ${classify(avg)} (Weighted Average: ${avg.toFixed(2)})</p>`;
+        if (avg < lowestAvg) { lowestAvg = avg; lowestCat = cat; }
+      });
+      
+      document.getElementById("result").innerHTML = resultText;
+      let insightsText = `<h3>Dynamic Insights & Recommendations</h3>
+                          <p>Your lowest scoring category is <strong>${lowestCat}</strong> (Weighted Average: ${lowestAvg.toFixed(2)}). Focus on improving this area for better overall balance.</p>`;
+      document.getElementById("insights").innerHTML = insightsText;
+      
+      trendData.push({ time: new Date().toLocaleTimeString(), score: overallAvg });
+      generateBarChart(categoryAverages);
+      generateRadarChart(categoryAverages);
+      generatePieChart(categoryAverages);
+      generateDonutChart();
+      generateLineChart(trendData);
+      generateScatterChart(scatterData);
+      generateHeatmap();
+      generateSankeyDiagram();
+      generateSunburstChart();
+      
+      generateChartInterpretations(categoryAverages, trendData, scatterData);
+      generatePersonalizedInsights();
+    }
+    
+    // Generate deep interpretations for charts.
+    function generateChartInterpretations(categoryAverages, trendData, scatterData) {
+      const scoresByCategory = getParameterScores();
+      let barInterp = `<h3>Bar Chart Analysis</h3>`;
+      Object.keys(categoryAverages).forEach(cat => {
+        barInterp += generateCategoryInterpretation(cat, scoresByCategory[cat], categoryAverages[cat]);
+      });
+      document.getElementById("barChartInterpretation").innerHTML = barInterp;
+      
+      let radarInterp = `<h3>Radar Chart Analysis</h3>
+                         <p>The radar chart mirrors the bar chart data. Notice any significant imbalances between categories. Aim for a balanced profile.</p>`;
+      document.getElementById("radarChartInterpretation").innerHTML = radarInterp;
+      
+      let pieInterp = `<h3>Pie Chart Analysis</h3>
+                       <p>This chart shows the proportional contributions of each category to your overall score.</p>`;
+      document.getElementById("pieChartInterpretation").innerHTML = pieInterp;
+      
+      let donutInterp = `<h3>Donut Chart Analysis</h3>
+                         <p>The donut chart segments your overall classification into Sattva, Rajas, and Tamas. A balanced distribution is ideal.</p>`;
+      document.getElementById("donutChartInterpretation").innerHTML = donutInterp;
+      
+      let lineInterp = `<h3>Line Chart Analysis</h3>
+                        <p>Your overall score trend over time is shown in the line chart. Monitor for improvements or declines.</p>`;
+      document.getElementById("lineChartInterpretation").innerHTML = lineInterp;
+      
+      let scatterInterp = `<h3>Scatter Plot Analysis</h3>
+                           <p>The scatter plot displays individual parameter scores. Look for clusters of low scores to target for improvement.</p>`;
+      document.getElementById("scatterChartInterpretation").innerHTML = scatterInterp;
+      
+      let heatmapInterp = `<h3>Heatmap Analysis</h3>
+                           <p>The heatmap below highlights your parameter scores with color intensity. Red indicates areas needing the most attention.</p>`;
+      document.getElementById("heatmapInterpretation").innerHTML = heatmapInterp;
+      
+      let sankeyInterp = `<h3>Sankey Diagram Analysis</h3>
+                          <p>The Sankey diagram visualizes the flow between your AVAV categories and their influence on your overall well-being.</p>`;
+      document.getElementById("sankeyInterpretation").innerHTML = sankeyInterp;
+      
+      let sunburstInterp = `<h3>Sunburst Chart Analysis</h3>
+                            <p>The sunburst chart provides a hierarchical view of your AVAV parameters. Smaller segments indicate areas needing more focus.</p>`;
+      document.getElementById("sunburstInterpretation").innerHTML = sunburstInterp;
+    }
+    
+    function getParameterScores() {
+      let scoresByCategory = {
+        "Aahara (Diet & Nutrition)": [],
+        "Vihara (Lifestyle & Daily Routine)": [],
+        "Achara (Conduct, Behavior, and Ethics)": [],
+        "Vichara (Thought Process & Mental Discipline)": []
+      };
+      parameters.forEach((param, index) => {
+        const radios = document.getElementsByName("param" + index);
+        let score = 0;
+        radios.forEach(radio => { if (radio.checked) { score = parseInt(radio.value); } });
+        scoresByCategory[param.category].push({ name: param.name, score: score });
+      });
+      return scoresByCategory;
+    }
+    
+    function generateCategoryInterpretation(category, scores, average) {
+      let lowParams = scores.filter(p => p.score < 5).map(p => p.name);
+      let midParams = scores.filter(p => p.score >= 5 && p.score < 7.5).map(p => p.name);
+      let highParams = scores.filter(p => p.score >= 7.5).map(p => p.name);
+      let text = `<h4>${category} Analysis</h4>`;
+      text += `<p><strong>Average Score:</strong> ${average.toFixed(2)} (${classify(average)})</p>`;
+      if(lowParams.length) text += `<p><strong>Needs Improvement:</strong> ${lowParams.join(", ")}</p>`;
+      if(midParams.length) text += `<p><strong>Moderate Areas:</strong> ${midParams.join(", ")}</p>`;
+      if(highParams.length) text += `<p><strong>Strengths:</strong> ${highParams.join(", ")}</p>`;
+      text += `<p>Focus on improving the low scoring aspects for better overall balance.</p>`;
+      return text;
+    }
+    
+    function generatePersonalizedInsights() {
+      let parameterScores = [];
+      parameters.forEach((param, index) => {
+        const radios = document.getElementsByName("param" + index);
+        let score = 0;
+        radios.forEach(radio => { if (radio.checked) { score = parseInt(radio.value); } });
+        if (score > 0) parameterScores.push({ name: param.name, score: score, category: param.category });
+      });
+      let sortedDescending = [...parameterScores].sort((a, b) => b.score - a.score);
+      let top3 = sortedDescending.slice(0, 3);
+      let sortedAscending = [...parameterScores].sort((a, b) => a.score - b.score);
+      let bottom3 = sortedAscending.slice(0, 3);
+      let actionPlan = "We recommend focusing on the parameters that scored the lowest, adopting mindful practices, and tracking your progress over time.";
+      let html = `<h2>Insights & Personalized Recommendations</h2>`;
+      html += `<div class="insights-section">`;
+      html += `<h3>Strengths</h3>`;
+      html += `<p><strong>Top 3 Strongest Traits:</strong> ${top3.map(p => p.name + " (" + p.score + ")").join(", ")}</p>`;
+      html += `<h3>Areas for Improvement</h3>`;
+      html += `<p><strong>Bottom 3 Weakest Parameters:</strong> ${bottom3.map(p => p.name + " (" + p.score + ")").join(", ")}</p>`;
+      html += `<p><strong>Recommended Action Plan:</strong> ${actionPlan}</p>`;
+      html += `</div>`;
+      document.getElementById("personalizedInsights").innerHTML = html;
+    }
+    
+    // ---------------------- Chart.js Visualization Functions ---------------------- //
+    
+    function generateLineChart(trendData) {
+      let ctx = document.getElementById('lineChart').getContext('2d');
+      let labels = trendData.map(entry => entry.time);
+      let data = trendData.map(entry => entry.score);
+      if (window.lineChartInstance) { window.lineChartInstance.destroy(); }
+      window.lineChartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Overall Score Over Time',
+            data: data,
+            fill: false,
+            borderColor: '#0d6efd',
+            tension: 0.1
+          }]
+        },
+        options: { scales: { y: { beginAtZero: true, max: 10 } } }
+      });
+    }
+    
+    function generateScatterChart(scatterData) {
+      let ctx = document.getElementById('scatterChart').getContext('2d');
+      if (window.scatterChartInstance) { window.scatterChartInstance.destroy(); }
+      window.scatterChartInstance = new Chart(ctx, {
+        type: 'scatter',
+        data: {
+          datasets: [{
+            label: 'Parameter Scores',
+            data: scatterData,
+            backgroundColor: '#0d6efd'
+          }]
+        },
+        options: {
+          scales: {
+            x: { title: { display: true, text: 'Parameter Index' } },
+            y: { title: { display: true, text: 'Score' }, beginAtZero: true, max: 10 }
+          }
+        }
+      });
+    }
+    
+    // ---------------------- Advanced Visualization Functions ---------------------- //
+    
+    function generateHeatmap() {
+      let html = `<h3>Heatmap of Parameter Scores</h3>`;
+      html += `<table class="heatmap-table"><thead><tr><th>Parameter</th><th>Score</th></tr></thead><tbody>`;
+      parameters.forEach((param, index) => {
+        const radios = document.getElementsByName("param" + index);
+        let score = 0;
+        radios.forEach(radio => { if (radio.checked) { score = parseInt(radio.value); } });
+        let color = score >= 7.5 ? '#28a745' : score >= 5 ? '#ffc107' : '#dc3545';
+        html += `<tr><td>${param.name}</td><td style="background-color:${color}; color:#fff;">${score}</td></tr>`;
+      });
+      html += `</tbody></table>`;
+      document.getElementById("heatmapContainer").innerHTML = html;
+    }
+    
+    function generateSankeyDiagram() {
+      document.getElementById("sankeyDiagram").innerHTML = "";
+      const data = {
+        nodes: [
+          { name: "Aahara" },
+          { name: "Vihara" },
+          { name: "Achara" },
+          { name: "Vichara" },
+          { name: "Sattva" },
+          { name: "Rajas" },
+          { name: "Tamas" }
+        ],
+        links: [
+          { source: 0, target: 4, value: 5 },
+          { source: 0, target: 5, value: 3 },
+          { source: 1, target: 4, value: 6 },
+          { source: 1, target: 6, value: 4 },
+          { source: 2, target: 5, value: 7 },
+          { source: 2, target: 6, value: 2 },
+          { source: 3, target: 4, value: 4 },
+          { source: 3, target: 5, value: 5 }
+        ]
+      };
+      
+      const width = 400, height = 300;
+      const svg = d3.select("#sankeyDiagram").append("svg")
+                    .attr("width", width)
+                    .attr("height", height);
+      const sankey = d3.sankey()
+                       .nodeWidth(15)
+                       .nodePadding(10)
+                       .extent([[1, 1], [width - 1, height - 6]]);
+      const {nodes, links} = sankey({
+        nodes: data.nodes.map(d => Object.assign({}, d)),
+        links: data.links.map(d => Object.assign({}, d))
+      });
+      
+      svg.append("g")
+         .selectAll("rect")
+         .data(nodes)
+         .enter().append("rect")
+           .attr("x", d => d.x0)
+           .attr("y", d => d.y0)
+           .attr("height", d => d.y1 - d.y0)
+           .attr("width", d => d.x1 - d.x0)
+           .attr("fill", "#0d6efd")
+           .attr("stroke", "#000");
+      
+      svg.append("g")
+         .selectAll("path")
+         .data(links)
+         .enter().append("path")
+           .attr("d", d3.sankeyLinkHorizontal())
+           .attr("stroke", "#ffc107")
+           .attr("stroke-width", d => Math.max(1, d.width))
+           .attr("fill", "none");
+      
+      svg.append("g")
+         .selectAll("text")
+         .data(nodes)
+         .enter().append("text")
+           .attr("x", d => d.x0 - 6)
+           .attr("y", d => (d.y1 + d.y0) / 2)
+           .attr("dy", "0.35em")
+           .attr("text-anchor", "end")
+           .text(d => d.name);
+    }
+    
+    function generateSunburstChart() {
+      document.getElementById("sunburstChart").innerHTML = "";
+      const data = {
+        name: "AVAV",
+        children: [
+          { name: "Aahara", children: parameters.filter(p => p.category === "Aahara (Diet & Nutrition)").map(p => ({ name: p.name, value: 1 })) },
+          { name: "Vihara", children: parameters.filter(p => p.category === "Vihara (Lifestyle & Daily Routine)").map(p => ({ name: p.name, value: 1 })) },
+          { name: "Achara", children: parameters.filter(p => p.category === "Achara (Conduct, Behavior, and Ethics)").map(p => ({ name: p.name, value: 1 })) },
+          { name: "Vichara", children: parameters.filter(p => p.category === "Vichara (Thought Process & Mental Discipline)").map(p => ({ name: p.name, value: 1 })) }
+        ]
+      };
+      
+      const width = 400, radius = width / 2;
+      const partition = d3.partition().size([2 * Math.PI, radius]);
+      const root = d3.hierarchy(data).sum(d => d.value);
+      partition(root);
+      
+      const svg = d3.select("#sunburstChart").append("svg")
+                    .attr("width", width)
+                    .attr("height", width)
+                    .append("g")
+                    .attr("transform", `translate(${radius},${radius})`);
+      
+      const arc = d3.arc()
+                    .startAngle(d => d.x0)
+                    .endAngle(d => d.x1)
+                    .innerRadius(d => d.y0)
+                    .outerRadius(d => d.y1);
+      
+      svg.selectAll("path")
+         .data(root.descendants())
+         .enter().append("path")
+           .attr("display", d => d.depth ? null : "none")
+           .attr("d", arc)
+           .style("stroke", "#fff")
+           .style("fill", d => {
+             if (d.depth === 1) return "#0d6efd";
+             if (d.depth === 2) return "#ffc107";
+             return "#dc3545";
+           })
+           .append("title")
+           .text(d => d.data.name);
+    }
+    
+    // ---------------------- Export & Persistence Functions ---------------------- //
+    
+    function downloadCSV() {
+      let csvContent = "data:text/csv;charset=utf-8,Category,Parameter,Score,Weight,Remarks\n";
+      parameters.forEach((param, index) => {
+        let radios = document.getElementsByName("param" + index);
+        let score = "";
+        radios.forEach(radio => { if (radio.checked) { score = radio.value; } });
+        let remark = document.getElementsByName("remark" + index)[0].value;
+        csvContent += `"${param.category}","${param.name}","${score}","${param.weight}","${remark}"\n`;
+      });
+      let encodedUri = encodeURI(csvContent);
+      let link = document.createElement("a");
+      link.setAttribute("href", encodedUri);
+      link.setAttribute("download", "AVAV_Yogic_Traits_Report.csv");
+      document.body.appendChild(link);
+      link.click();
+    }
+    
+    function downloadPDF() {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+      doc.setFontSize(16);
+      doc.text("AVAV Yogic Traits Report", 10, 20);
+      doc.setFontSize(12);
+      let resultText = document.getElementById("result").innerText;
+      let insightsText = document.getElementById("insights").innerText;
+      doc.text(resultText, 10, 30);
+      doc.text(insightsText, 10, 50);
+      doc.save("AVAV_Yogic_Traits_Report.pdf");
+    }
+    
+    function saveData() {
+      let data = [];
+      parameters.forEach((param, index) => {
+        const radios = document.getElementsByName("param" + index);
+        let selectedScore = "";
+        radios.forEach(radio => { if (radio.checked) { selectedScore = radio.value; } });
+        let remark = document.getElementsByName("remark" + index)[0].value;
+        data.push({ score: selectedScore, remark: remark });
+      });
+      localStorage.setItem("avavData", JSON.stringify(data));
+      alert("Data saved successfully!");
+    }
+    
+    function loadData() {
+      let data = JSON.parse(localStorage.getItem("avavData"));
+      if (!data) { alert("No saved data found."); return; }
+      data.forEach((entry, index) => {
+        const radios = document.getElementsByName("param" + index);
+        radios.forEach(radio => { if (radio.value === entry.score) { radio.checked = true; } });
+        document.getElementsByName("remark" + index)[0].value = entry.remark;
+      });
+      alert("Data loaded successfully!");
+    }
+    
+    // ---------------------- Chart.js Visualization Functions ---------------------- //
+    
+    function generateBarChart(categoryAverages) {
+      let ctx = document.getElementById('barChart').getContext('2d');
+      let labels = Object.keys(categoryAverages);
+      let data = labels.map(cat => categoryAverages[cat]);
+      if (window.barChartInstance) { window.barChartInstance.destroy(); }
+      window.barChartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Weighted Average Score',
+            data: data,
+            backgroundColor: ['#28a745', '#ffc107', '#17a2b8', '#dc3545']
+          }]
+        },
+        options: { scales: { y: { beginAtZero: true, max: 10 } } }
+      });
+    }
+    
+    function generateRadarChart(categoryAverages) {
+      let ctx = document.getElementById('radarChart').getContext('2d');
+      let labels = Object.keys(categoryAverages);
+      let data = labels.map(cat => categoryAverages[cat]);
+      if (window.radarChartInstance) { window.radarChartInstance.destroy(); }
+      window.radarChartInstance = new Chart(ctx, {
+        type: 'radar',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Weighted Average Score',
+            data: data,
+            backgroundColor: 'rgba(13,110,253,0.2)',
+            borderColor: '#0d6efd',
+            pointBackgroundColor: '#0d6efd'
+          }]
+        },
+        options: { scales: { r: { beginAtZero: true, max: 10 } } }
+      });
+    }
+    
+    function generatePieChart(categoryAverages) {
+      let ctx = document.getElementById('pieChart').getContext('2d');
+      let labels = Object.keys(categoryAverages);
+      let data = labels.map(cat => categoryAverages[cat]);
+      if (window.pieChartInstance) { window.pieChartInstance.destroy(); }
+      window.pieChartInstance = new Chart(ctx, {
+        type: 'pie',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Category Distribution (%)',
+            data: data,
+            backgroundColor: ['#28a745', '#ffc107', '#17a2b8', '#dc3545']
+          }]
+        },
+        options: {
+          plugins: {
+            tooltip: {
+              callbacks: {
+                label: function(context) {
+                  let sum = data.reduce((a, b) => a + b, 0);
+                  let percentage = ((context.parsed / sum) * 100).toFixed(2) + '%';
+                  return context.label + ': ' + percentage;
+                }
+              }
+            }
+          }
+        }
+      });
+    }
+    
+    function generateDonutChart() {
+      // For demonstration, use overall classifications count
+      let classificationCount = { Sattva: 0, Rajas: 0, Tamas: 0 };
+      // Here, we simply assume one count per category for demonstration.
+      classificationCount["Sattva"] = 1;
+      classificationCount["Rajas"] = 1;
+      classificationCount["Tamas"] = 2;
+      let ctx = document.getElementById('donutChart').getContext('2d');
+      let labels = Object.keys(classificationCount);
+      let data = labels.map(label => classificationCount[label]);
+      if (window.donutChartInstance) { window.donutChartInstance.destroy(); }
+      window.donutChartInstance = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Classification Distribution',
+            data: data,
+            backgroundColor: ['#28a745', '#ffc107', '#dc3545']
+          }]
+        }
+      });
+    }
+    
+    function generateLineChart(trendData) {
+      let ctx = document.getElementById('lineChart').getContext('2d');
+      let labels = trendData.map(entry => entry.time);
+      let data = trendData.map(entry => entry.score);
+      if (window.lineChartInstance) { window.lineChartInstance.destroy(); }
+      window.lineChartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Overall Score Over Time',
+            data: data,
+            fill: false,
+            borderColor: '#0d6efd',
+            tension: 0.1
+          }]
+        },
+        options: { scales: { y: { beginAtZero: true, max: 10 } } }
+      });
+    }
+    
+    function generateScatterChart(scatterData) {
+      let ctx = document.getElementById('scatterChart').getContext('2d');
+      if (window.scatterChartInstance) { window.scatterChartInstance.destroy(); }
+      window.scatterChartInstance = new Chart(ctx, {
+        type: 'scatter',
+        data: {
+          datasets: [{
+            label: 'Parameter Scores',
+            data: scatterData,
+            backgroundColor: '#0d6efd'
+          }]
+        },
+        options: {
+          scales: {
+            x: { title: { display: true, text: 'Parameter Index' } },
+            y: { title: { display: true, text: 'Score' }, beginAtZero: true, max: 10 }
+          }
+        }
+      });
+    }
+    
+    function generateHeatmap() {
+      let html = `<h3>Heatmap of Parameter Scores</h3>`;
+      html += `<table class="heatmap-table"><thead><tr><th>Parameter</th><th>Score</th></tr></thead><tbody>`;
+      parameters.forEach((param, index) => {
+        const radios = document.getElementsByName("param" + index);
+        let score = 0;
+        radios.forEach(radio => { if (radio.checked) { score = parseInt(radio.value); } });
+        let color = score >= 7.5 ? '#28a745' : score >= 5 ? '#ffc107' : '#dc3545';
+        html += `<tr><td>${param.name}</td><td style="background-color:${color}; color:#fff;">${score}</td></tr>`;
+      });
+      html += `</tbody></table>`;
+      document.getElementById("heatmapContainer").innerHTML = html;
+    }
+    
+    // Sankey Diagram using D3.js.
+    function generateSankeyDiagram() {
+      document.getElementById("sankeyDiagram").innerHTML = "";
+      const data = {
+        nodes: [
+          { name: "Aahara" },
+          { name: "Vihara" },
+          { name: "Achara" },
+          { name: "Vichara" },
+          { name: "Sattva" },
+          { name: "Rajas" },
+          { name: "Tamas" }
+        ],
+        links: [
+          { source: 0, target: 4, value: 5 },
+          { source: 0, target: 5, value: 3 },
+          { source: 1, target: 4, value: 6 },
+          { source: 1, target: 6, value: 4 },
+          { source: 2, target: 5, value: 7 },
+          { source: 2, target: 6, value: 2 },
+          { source: 3, target: 4, value: 4 },
+          { source: 3, target: 5, value: 5 }
+        ]
+      };
+      
+      const width = 400, height = 300;
+      const svg = d3.select("#sankeyDiagram").append("svg")
+                    .attr("width", width)
+                    .attr("height", height);
+      const sankey = d3.sankey()
+                       .nodeWidth(15)
+                       .nodePadding(10)
+                       .extent([[1, 1], [width - 1, height - 6]]);
+      const {nodes, links} = sankey({
+        nodes: data.nodes.map(d => Object.assign({}, d)),
+        links: data.links.map(d => Object.assign({}, d))
+      });
+      
+      svg.append("g")
+         .selectAll("rect")
+         .data(nodes)
+         .enter().append("rect")
+           .attr("x", d => d.x0)
+           .attr("y", d => d.y0)
+           .attr("height", d => d.y1 - d.y0)
+           .attr("width", d => d.x1 - d.x0)
+           .attr("fill", "#0d6efd")
+           .attr("stroke", "#000");
+      
+      svg.append("g")
+         .selectAll("path")
+         .data(links)
+         .enter().append("path")
+           .attr("d", d3.sankeyLinkHorizontal())
+           .attr("stroke", "#ffc107")
+           .attr("stroke-width", d => Math.max(1, d.width))
+           .attr("fill", "none");
+      
+      svg.append("g")
+         .selectAll("text")
+         .data(nodes)
+         .enter().append("text")
+           .attr("x", d => d.x0 - 6)
+           .attr("y", d => (d.y1 + d.y0) / 2)
+           .attr("dy", "0.35em")
+           .attr("text-anchor", "end")
+           .text(d => d.name);
+    }
+    
+    // Sunburst Chart using D3.js.
+    function generateSunburstChart() {
+      document.getElementById("sunburstChart").innerHTML = "";
+      const data = {
+        name: "AVAV",
+        children: [
+          { name: "Aahara", children: parameters.filter(p => p.category === "Aahara (Diet & Nutrition)").map(p => ({ name: p.name, value: 1 })) },
+          { name: "Vihara", children: parameters.filter(p => p.category === "Vihara (Lifestyle & Daily Routine)").map(p => ({ name: p.name, value: 1 })) },
+          { name: "Achara", children: parameters.filter(p => p.category === "Achara (Conduct, Behavior, and Ethics)").map(p => ({ name: p.name, value: 1 })) },
+          { name: "Vichara", children: parameters.filter(p => p.category === "Vichara (Thought Process & Mental Discipline)").map(p => ({ name: p.name, value: 1 })) }
+        ]
+      };
+      
+      const width = 400, radius = width / 2;
+      const partition = d3.partition().size([2 * Math.PI, radius]);
+      const root = d3.hierarchy(data).sum(d => d.value);
+      partition(root);
+      
+      const svg = d3.select("#sunburstChart").append("svg")
+                    .attr("width", width)
+                    .attr("height", width)
+                    .append("g")
+                    .attr("transform", `translate(${radius},${radius})`);
+      
+      const arc = d3.arc()
+                    .startAngle(d => d.x0)
+                    .endAngle(d => d.x1)
+                    .innerRadius(d => d.y0)
+                    .outerRadius(d => d.y1);
+      
+      svg.selectAll("path")
+         .data(root.descendants())
+         .enter().append("path")
+           .attr("display", d => d.depth ? null : "none")
+           .attr("d", arc)
+           .style("stroke", "#fff")
+           .style("fill", d => {
+             if (d.depth === 1) return "#0d6efd";
+             if (d.depth === 2) return "#ffc107";
+             return "#dc3545";
+           })
+           .append("title")
+           .text(d => d.data.name);
+    }
+    
+    // ---------------------- Export & Persistence ---------------------- //
+    
+    function downloadCSV() {
+      let csvContent = "data:text/csv;charset=utf-8,Category,Parameter,Score,Weight,Remarks\n";
+      parameters.forEach((param, index) => {
+        let radios = document.getElementsByName("param" + index);
+        let score = "";
+        radios.forEach(radio => { if (radio.checked) { score = radio.value; } });
+        let remark = document.getElementsByName("remark" + index)[0].value;
+        csvContent += `"${param.category}","${param.name}","${score}","${param.weight}","${remark}"\n`;
+      });
+      let encodedUri = encodeURI(csvContent);
+      let link = document.createElement("a");
+      link.setAttribute("href", encodedUri);
+      link.setAttribute("download", "AVAV_Yogic_Traits_Report.csv");
+      document.body.appendChild(link);
+      link.click();
+    }
+    
+    function downloadPDF() {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+      doc.setFontSize(16);
+      doc.text("AVAV Yogic Traits Report", 10, 20);
+      doc.setFontSize(12);
+      let resultText = document.getElementById("result").innerText;
+      let insightsText = document.getElementById("insights").innerText;
+      doc.text(resultText, 10, 30);
+      doc.text(insightsText, 10, 50);
+      doc.save("AVAV_Yogic_Traits_Report.pdf");
+    }
+    
+    function saveData() {
+      let data = [];
+      parameters.forEach((param, index) => {
+        const radios = document.getElementsByName("param" + index);
+        let selectedScore = "";
+        radios.forEach(radio => { if (radio.checked) { selectedScore = radio.value; } });
+        let remark = document.getElementsByName("remark" + index)[0].value;
+        data.push({ score: selectedScore, remark: remark });
+      });
+      localStorage.setItem("avavData", JSON.stringify(data));
+      alert("Data saved successfully!");
+    }
+    
+    function loadData() {
+      let data = JSON.parse(localStorage.getItem("avavData"));
+      if (!data) { alert("No saved data found."); return; }
+      data.forEach((entry, index) => {
+        const radios = document.getElementsByName("param" + index);
+        radios.forEach(radio => { if (radio.value === entry.score) { radio.checked = true; } });
+        document.getElementsByName("remark" + index)[0].value = entry.remark;
+      });
+      alert("Data loaded successfully!");
+    }
+    
+    // ---------------------- Chart.js Functions ---------------------- //
+    
+    function generateLineChart(trendData) {
+      let ctx = document.getElementById('lineChart').getContext('2d');
+      let labels = trendData.map(entry => entry.time);
+      let data = trendData.map(entry => entry.score);
+      if (window.lineChartInstance) { window.lineChartInstance.destroy(); }
+      window.lineChartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Overall Score Over Time',
+            data: data,
+            fill: false,
+            borderColor: '#0d6efd',
+            tension: 0.1
+          }]
+        },
+        options: { scales: { y: { beginAtZero: true, max: 10 } } }
+      });
+    }
+    
+    function generateScatterChart(scatterData) {
+      let ctx = document.getElementById('scatterChart').getContext('2d');
+      if (window.scatterChartInstance) { window.scatterChartInstance.destroy(); }
+      window.scatterChartInstance = new Chart(ctx, {
+        type: 'scatter',
+        data: {
+          datasets: [{
+            label: 'Parameter Scores',
+            data: scatterData,
+            backgroundColor: '#0d6efd'
+          }]
+        },
+        options: {
+          scales: {
+            x: { title: { display: true, text: 'Parameter Index' } },
+            y: { title: { display: true, text: 'Score' }, beginAtZero: true, max: 10 }
+          }
+        }
+      });
+    }
+    
+    // ---------------------- Advanced Visualization Functions ---------------------- //
+    
+    function generateHeatmap() {
+      let html = `<h3>Heatmap of Parameter Scores</h3>`;
+      html += `<table class="heatmap-table"><thead><tr><th>Parameter</th><th>Score</th></tr></thead><tbody>`;
+      parameters.forEach((param, index) => {
+        const radios = document.getElementsByName("param" + index);
+        let score = 0;
+        radios.forEach(radio => { if (radio.checked) { score = parseInt(radio.value); } });
+        let color = score >= 7.5 ? '#28a745' : score >= 5 ? '#ffc107' : '#dc3545';
+        html += `<tr><td>${param.name}</td><td style="background-color:${color}; color:#fff;">${score}</td></tr>`;
+      });
+      html += `</tbody></table>`;
+      document.getElementById("heatmapContainer").innerHTML = html;
+    }
+    
+    function generateSankeyDiagram() {
+      document.getElementById("sankeyDiagram").innerHTML = "";
+      const data = {
+        nodes: [
+          { name: "Aahara" },
+          { name: "Vihara" },
+          { name: "Achara" },
+          { name: "Vichara" },
+          { name: "Sattva" },
+          { name: "Rajas" },
+          { name: "Tamas" }
+        ],
+        links: [
+          { source: 0, target: 4, value: 5 },
+          { source: 0, target: 5, value: 3 },
+          { source: 1, target: 4, value: 6 },
+          { source: 1, target: 6, value: 4 },
+          { source: 2, target: 5, value: 7 },
+          { source: 2, target: 6, value: 2 },
+          { source: 3, target: 4, value: 4 },
+          { source: 3, target: 5, value: 5 }
+        ]
+      };
+      
+      const width = 400, height = 300;
+      const svg = d3.select("#sankeyDiagram").append("svg")
+                    .attr("width", width)
+                    .attr("height", height);
+      const sankey = d3.sankey()
+                       .nodeWidth(15)
+                       .nodePadding(10)
+                       .extent([[1, 1], [width - 1, height - 6]]);
+      const {nodes, links} = sankey({
+        nodes: data.nodes.map(d => Object.assign({}, d)),
+        links: data.links.map(d => Object.assign({}, d))
+      });
+      
+      svg.append("g")
+         .selectAll("rect")
+         .data(nodes)
+         .enter().append("rect")
+           .attr("x", d => d.x0)
+           .attr("y", d => d.y0)
+           .attr("height", d => d.y1 - d.y0)
+           .attr("width", d => d.x1 - d.x0)
+           .attr("fill", "#0d6efd")
+           .attr("stroke", "#000");
+      
+      svg.append("g")
+         .selectAll("path")
+         .data(links)
+         .enter().append("path")
+           .attr("d", d3.sankeyLinkHorizontal())
+           .attr("stroke", "#ffc107")
+           .attr("stroke-width", d => Math.max(1, d.width))
+           .attr("fill", "none");
+      
+      svg.append("g")
+         .selectAll("text")
+         .data(nodes)
+         .enter().append("text")
+           .attr("x", d => d.x0 - 6)
+           .attr("y", d => (d.y1 + d.y0) / 2)
+           .attr("dy", "0.35em")
+           .attr("text-anchor", "end")
+           .text(d => d.name);
+    }
+    
+    function generateSunburstChart() {
+      document.getElementById("sunburstChart").innerHTML = "";
+      const data = {
+        name: "AVAV",
+        children: [
+          { name: "Aahara", children: parameters.filter(p => p.category === "Aahara (Diet & Nutrition)").map(p => ({ name: p.name, value: 1 })) },
+          { name: "Vihara", children: parameters.filter(p => p.category === "Vihara (Lifestyle & Daily Routine)").map(p => ({ name: p.name, value: 1 })) },
+          { name: "Achara", children: parameters.filter(p => p.category === "Achara (Conduct, Behavior, and Ethics)").map(p => ({ name: p.name, value: 1 })) },
+          { name: "Vichara", children: parameters.filter(p => p.category === "Vichara (Thought Process & Mental Discipline)").map(p => ({ name: p.name, value: 1 })) }
+        ]
+      };
+      
+      const width = 400, radius = width / 2;
+      const partition = d3.partition().size([2 * Math.PI, radius]);
+      const root = d3.hierarchy(data).sum(d => d.value);
+      partition(root);
+      
+      const svg = d3.select("#sunburstChart").append("svg")
+                    .attr("width", width)
+                    .attr("height", width)
+                    .append("g")
+                    .attr("transform", `translate(${radius},${radius})`);
+      
+      const arc = d3.arc()
+                    .startAngle(d => d.x0)
+                    .endAngle(d => d.x1)
+                    .innerRadius(d => d.y0)
+                    .outerRadius(d => d.y1);
+      
+      svg.selectAll("path")
+         .data(root.descendants())
+         .enter().append("path")
+           .attr("display", d => d.depth ? null : "none")
+           .attr("d", arc)
+           .style("stroke", "#fff")
+           .style("fill", d => {
+             if (d.depth === 1) return "#0d6efd";
+             if (d.depth === 2) return "#ffc107";
+             return "#dc3545";
+           })
+           .append("title")
+           .text(d => d.data.name);
+    }
+    
+    // ---------------------- Export & Persistence Functions ---------------------- //
+    
+    function downloadCSV() {
+      let csvContent = "data:text/csv;charset=utf-8,Category,Parameter,Score,Weight,Remarks\n";
+      parameters.forEach((param, index) => {
+        let radios = document.getElementsByName("param" + index);
+        let score = "";
+        radios.forEach(radio => { if (radio.checked) { score = radio.value; } });
+        let remark = document.getElementsByName("remark" + index)[0].value;
+        csvContent += `"${param.category}","${param.name}","${score}","${param.weight}","${remark}"\n`;
+      });
+      let encodedUri = encodeURI(csvContent);
+      let link = document.createElement("a");
+      link.setAttribute("href", encodedUri);
+      link.setAttribute("download", "AVAV_Yogic_Traits_Report.csv");
+      document.body.appendChild(link);
+      link.click();
+    }
+    
+    function downloadPDF() {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+      doc.setFontSize(16);
+      doc.text("AVAV Yogic Traits Report", 10, 20);
+      doc.setFontSize(12);
+      let resultText = document.getElementById("result").innerText;
+      let insightsText = document.getElementById("insights").innerText;
+      doc.text(resultText, 10, 30);
+      doc.text(insightsText, 10, 50);
+      doc.save("AVAV_Yogic_Traits_Report.pdf");
+    }
+    
+    function saveData() {
+      let data = [];
+      parameters.forEach((param, index) => {
+        const radios = document.getElementsByName("param" + index);
+        let selectedScore = "";
+        radios.forEach(radio => { if (radio.checked) { selectedScore = radio.value; } });
+        let remark = document.getElementsByName("remark" + index)[0].value;
+        data.push({ score: selectedScore, remark: remark });
+      });
+      localStorage.setItem("avavData", JSON.stringify(data));
+      alert("Data saved successfully!");
+    }
+    
+    function loadData() {
+      let data = JSON.parse(localStorage.getItem("avavData"));
+      if (!data) { alert("No saved data found."); return; }
+      data.forEach((entry, index) => {
+        const radios = document.getElementsByName("param" + index);
+        radios.forEach(radio => { if (radio.value === entry.score) { radio.checked = true; } });
+        document.getElementsByName("remark" + index)[0].value = entry.remark;
+      });
+      alert("Data loaded successfully!");
+    }
+    
+    // ---------------------- Chart.js Visualization Functions ---------------------- //
+    
+    function generateLineChart(trendData) {
+      let ctx = document.getElementById('lineChart').getContext('2d');
+      let labels = trendData.map(entry => entry.time);
+      let data = trendData.map(entry => entry.score);
+      if (window.lineChartInstance) { window.lineChartInstance.destroy(); }
+      window.lineChartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Overall Score Over Time',
+            data: data,
+            fill: false,
+            borderColor: '#0d6efd',
+            tension: 0.1
+          }]
+        },
+        options: { scales: { y: { beginAtZero: true, max: 10 } } }
+      });
+    }
+    
+    function generateScatterChart(scatterData) {
+      let ctx = document.getElementById('scatterChart').getContext('2d');
+      if (window.scatterChartInstance) { window.scatterChartInstance.destroy(); }
+      window.scatterChartInstance = new Chart(ctx, {
+        type: 'scatter',
+        data: {
+          datasets: [{
+            label: 'Parameter Scores',
+            data: scatterData,
+            backgroundColor: '#0d6efd'
+          }]
+        },
+        options: {
+          scales: {
+            x: { title: { display: true, text: 'Parameter Index' } },
+            y: { title: { display: true, text: 'Score' }, beginAtZero: true, max: 10 }
+          }
+        }
+      });
+    }
+    
+    // ---------------------- Advanced Visualization Functions ---------------------- //
+    
+    function generateChartInterpretations(categoryAverages, trendData, scatterData) {
+      const scoresByCategory = getParameterScores();
+      let barInterp = `<h3>Bar Chart Analysis</h3>`;
+      Object.keys(categoryAverages).forEach(cat => {
+        barInterp += generateCategoryInterpretation(cat, scoresByCategory[cat], categoryAverages[cat]);
+      });
+      document.getElementById("barChartInterpretation").innerHTML = barInterp;
+      
+      let radarInterp = `<h3>Radar Chart Analysis</h3>
+                         <p>The radar chart mirrors the bar chart data. Notice any significant imbalances between categories and target low-scoring areas.</p>`;
+      document.getElementById("radarChartInterpretation").innerHTML = radarInterp;
+      
+      let pieInterp = `<h3>Pie Chart Analysis</h3>
+                       <p>This chart shows the proportional contribution of each category to your overall score.</p>`;
+      document.getElementById("pieChartInterpretation").innerHTML = pieInterp;
+      
+      let donutInterp = `<h3>Donut Chart Analysis</h3>
+                         <p>The donut chart displays the distribution of classifications (Sattva, Rajas, Tamas) across categories.</p>`;
+      document.getElementById("donutChartInterpretation").innerHTML = donutInterp;
+      
+      let lineInterp = `<h3>Line Chart Analysis</h3>
+                        <p>Your overall score trend over time is shown here. Monitor changes and improvements over multiple sessions.</p>`;
+      document.getElementById("lineChartInterpretation").innerHTML = lineInterp;
+      
+      let scatterInterp = `<h3>Scatter Plot Analysis</h3>
+                           <p>The scatter plot displays individual parameter scores. Clusters of low scores can be areas to focus on.</p>`;
+      document.getElementById("scatterChartInterpretation").innerHTML = scatterInterp;
+      
+      let heatmapInterp = `<h3>Heatmap Analysis</h3>
+                           <p>The heatmap below highlights your parameter scores with color intensity. Red indicates areas needing attention, while green indicates strength.</p>`;
+      document.getElementById("heatmapInterpretation").innerHTML = heatmapInterp;
+      
+      let sankeyInterp = `<h3>Sankey Diagram Analysis</h3>
+                          <p>The Sankey diagram visualizes the flow between AVAV categories and their impact on overall well-being.</p>`;
+      document.getElementById("sankeyInterpretation").innerHTML = sankeyInterp;
+      
+      let sunburstInterp = `<h3>Sunburst Chart Analysis</h3>
+                            <p>The sunburst chart provides a hierarchical view of your AVAV traits, from overall categories down to individual parameters.</p>`;
+      document.getElementById("sunburstInterpretation").innerHTML = sunburstInterp;
+    }
+    
+    function getParameterScores() {
+      let scoresByCategory = {
+        "Aahara (Diet & Nutrition)": [],
+        "Vihara (Lifestyle & Daily Routine)": [],
+        "Achara (Conduct, Behavior, and Ethics)": [],
+        "Vichara (Thought Process & Mental Discipline)": []
+      };
+      parameters.forEach((param, index) => {
+        const radios = document.getElementsByName("param" + index);
+        let score = 0;
+        radios.forEach(radio => { if (radio.checked) { score = parseInt(radio.value); } });
+        scoresByCategory[param.category].push({ name: param.name, score: score });
+      });
+      return scoresByCategory;
+    }
+    
+    function generateCategoryInterpretation(category, scores, average) {
+      let lowParams = scores.filter(p => p.score < 5).map(p => p.name);
+      let midParams = scores.filter(p => p.score >= 5 && p.score < 7.5).map(p => p.name);
+      let highParams = scores.filter(p => p.score >= 7.5).map(p => p.name);
+      let text = `<h4>${category} Analysis</h4>`;
+      text += `<p><strong>Average Score:</strong> ${average.toFixed(2)} (${classify(average)})</p>`;
+      if(lowParams.length) text += `<p><strong>Needs Improvement:</strong> ${lowParams.join(", ")}</p>`;
+      if(midParams.length) text += `<p><strong>Moderate Areas:</strong> ${midParams.join(", ")}</p>`;
+      if(highParams.length) text += `<p><strong>Strengths:</strong> ${highParams.join(", ")}</p>`;
+      text += `<p>Focus on the low scoring aspects to elevate your overall performance.</p>`;
+      return text;
+    }
+    
+    function generatePersonalizedInsights() {
+      let parameterScores = [];
+      parameters.forEach((param, index) => {
+        const radios = document.getElementsByName("param" + index);
+        let score = 0;
+        radios.forEach(radio => { if(radio.checked) { score = parseInt(radio.value); } });
+        if (score > 0) parameterScores.push({ name: param.name, score: score, category: param.category });
+      });
+      let sortedDescending = [...parameterScores].sort((a, b) => b.score - a.score);
+      let top3 = sortedDescending.slice(0, 3);
+      let sortedAscending = [...parameterScores].sort((a, b) => a.score - b.score);
+      let bottom3 = sortedAscending.slice(0, 3);
+      let actionPlan = "Focus on the low scoring parameters. Consider adopting mindful practices, seeking expert guidance, and tracking progress consistently.";
+      let html = `<h2>Insights & Personalized Recommendations</h2>`;
+      html += `<div class="insights-section">`;
+      html += `<h3>Strengths</h3>`;
+      html += `<p><strong>Top 3 Strongest Traits:</strong> ${top3.map(p => p.name + " (" + p.score + ")").join(", ")}</p>`;
+      html += `<h3>Areas for Improvement</h3>`;
+      html += `<p><strong>Bottom 3 Weakest Parameters:</strong> ${bottom3.map(p => p.name + " (" + p.score + ")").join(", ")}</p>`;
+      html += `<p><strong>Recommended Action Plan:</strong> ${actionPlan}</p>`;
+      html += `</div>`;
+      document.getElementById("personalizedInsights").innerHTML = html;
+    }
+    
+    // ---------------------- Chart.js Functions ---------------------- //
+    
+    function generateLineChart(trendData) {
+      let ctx = document.getElementById('lineChart').getContext('2d');
+      let labels = trendData.map(entry => entry.time);
+      let data = trendData.map(entry => entry.score);
+      if (window.lineChartInstance) { window.lineChartInstance.destroy(); }
+      window.lineChartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Overall Score Over Time',
+            data: data,
+            fill: false,
+            borderColor: '#0d6efd',
+            tension: 0.1
+          }]
+        },
+        options: { scales: { y: { beginAtZero: true, max: 10 } } }
+      });
+    }
+    
+    function generateScatterChart(scatterData) {
+      let ctx = document.getElementById('scatterChart').getContext('2d');
+      if (window.scatterChartInstance) { window.scatterChartInstance.destroy(); }
+      window.scatterChartInstance = new Chart(ctx, {
+        type: 'scatter',
+        data: {
+          datasets: [{
+            label: 'Parameter Scores',
+            data: scatterData,
+            backgroundColor: '#0d6efd'
+          }]
+        },
+        options: {
+          scales: {
+            x: { title: { display: true, text: 'Parameter Index' } },
+            y: { title: { display: true, text: 'Score' }, beginAtZero: true, max: 10 }
+          }
+        }
+      });
+    }
+    
+    // ---------------------- Export & Persistence ---------------------- //
+    
+    function downloadCSV() {
+      let csvContent = "data:text/csv;charset=utf-8,Category,Parameter,Score,Weight,Remarks\n";
+      parameters.forEach((param, index) => {
+        let radios = document.getElementsByName("param" + index);
+        let score = "";
+        radios.forEach(radio => { if (radio.checked) { score = radio.value; } });
+        let remark = document.getElementsByName("remark" + index)[0].value;
+        csvContent += `"${param.category}","${param.name}","${score}","${param.weight}","${remark}"\n`;
+      });
+      let encodedUri = encodeURI(csvContent);
+      let link = document.createElement("a");
+      link.setAttribute("href", encodedUri);
+      link.setAttribute("download", "AVAV_Yogic_Traits_Report.csv");
+      document.body.appendChild(link);
+      link.click();
+    }
+    
+    function downloadPDF() {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+      doc.setFontSize(16);
+      doc.text("AVAV Yogic Traits Report", 10, 20);
+      doc.setFontSize(12);
+      let resultText = document.getElementById("result").innerText;
+      let insightsText = document.getElementById("insights").innerText;
+      doc.text(resultText, 10, 30);
+      doc.text(insightsText, 10, 50);
+      doc.save("AVAV_Yogic_Traits_Report.pdf");
+    }
+    
+    function saveData() {
+      let data = [];
+      parameters.forEach((param, index) => {
+        const radios = document.getElementsByName("param" + index);
+        let selectedScore = "";
+        radios.forEach(radio => { if (radio.checked) { selectedScore = radio.value; } });
+        let remark = document.getElementsByName("remark" + index)[0].value;
+        data.push({ score: selectedScore, remark: remark });
+      });
+      localStorage.setItem("avavData", JSON.stringify(data));
+      alert("Data saved successfully!");
+    }
+    
+    function loadData() {
+      let data = JSON.parse(localStorage.getItem("avavData"));
+      if (!data) { alert("No saved data found."); return; }
+      data.forEach((entry, index) => {
+        const radios = document.getElementsByName("param" + index);
+        radios.forEach(radio => { if (radio.value === entry.score) { radio.checked = true; } });
+        document.getElementsByName("remark" + index)[0].value = entry.remark;
+      });
+      alert("Data loaded successfully!");
+    }
+    
+    // ---------------------- Advanced Visualization Functions ---------------------- //
+    
+    function generateChartInterpretations(categoryAverages, trendData, scatterData) {
+      const scoresByCategory = getParameterScores();
+      let barInterp = `<h3>Bar Chart Analysis</h3>`;
+      Object.keys(categoryAverages).forEach(cat => {
+        barInterp += generateCategoryInterpretation(cat, scoresByCategory[cat], categoryAverages[cat]);
+      });
+      document.getElementById("barChartInterpretation").innerHTML = barInterp;
+      
+      let radarInterp = `<h3>Radar Chart Analysis</h3>
+                         <p>The radar chart mirrors the bar chart data. Notice any significant imbalances between categories and focus on areas with lower scores.</p>`;
+      document.getElementById("radarChartInterpretation").innerHTML = radarInterp;
+      
+      let pieInterp = `<h3>Pie Chart Analysis</h3>
+                       <p>This chart shows the proportional contribution of each category.</p>`;
+      document.getElementById("pieChartInterpretation").innerHTML = pieInterp;
+      
+      let donutInterp = `<h3>Donut Chart Analysis</h3>
+                         <p>The donut chart displays the overall classification distribution.</p>`;
+      document.getElementById("donutChartInterpretation").innerHTML = donutInterp;
+      
+      let lineInterp = `<h3>Line Chart Analysis</h3>
+                        <p>Your overall score trend over time is shown in the line chart. Monitor for improvements or declines.</p>`;
+      document.getElementById("lineChartInterpretation").innerHTML = lineInterp;
+      
+      let scatterInterp = `<h3>Scatter Plot Analysis</h3>
+                           <p>The scatter plot shows individual parameter scores. Look for clusters of low scores to target.</p>`;
+      document.getElementById("scatterChartInterpretation").innerHTML = scatterInterp;
+      
+      let heatmapInterp = `<h3>Heatmap Analysis</h3>
+                           <p>The heatmap highlights parameter scores with color intensity; red indicates areas needing attention.</p>`;
+      document.getElementById("heatmapInterpretation").innerHTML = heatmapInterp;
+      
+      let sankeyInterp = `<h3>Sankey Diagram Analysis</h3>
+                          <p>The Sankey diagram visualizes flows between AVAV categories and their impact on overall well-being.</p>`;
+      document.getElementById("sankeyInterpretation").innerHTML = sankeyInterp;
+      
+      let sunburstInterp = `<h3>Sunburst Chart Analysis</h3>
+                            <p>The sunburst chart provides a hierarchical view of your traits. Smaller arcs indicate areas for improvement.</p>`;
+      document.getElementById("sunburstInterpretation").innerHTML = sunburstInterp;
+    }
+    
+    function getParameterScores() {
+      let scoresByCategory = {
+        "Aahara (Diet & Nutrition)": [],
+        "Vihara (Lifestyle & Daily Routine)": [],
+        "Achara (Conduct, Behavior, and Ethics)": [],
+        "Vichara (Thought Process & Mental Discipline)": []
+      };
+      parameters.forEach((param, index) => {
+        const radios = document.getElementsByName("param" + index);
+        let score = 0;
+        radios.forEach(radio => { if (radio.checked) { score = parseInt(radio.value); } });
+        scoresByCategory[param.category].push({ name: param.name, score: score });
+      });
+      return scoresByCategory;
+    }
+    
+    function generateCategoryInterpretation(category, scores, average) {
+      let lowParams = scores.filter(p => p.score < 5).map(p => p.name);
+      let midParams = scores.filter(p => p.score >= 5 && p.score < 7.5).map(p => p.name);
+      let highParams = scores.filter(p => p.score >= 7.5).map(p => p.name);
+      let text = `<h4>${category} Analysis</h4>`;
+      text += `<p><strong>Average Score:</strong> ${average.toFixed(2)} (${classify(average)})</p>`;
+      if(lowParams.length) text += `<p><strong>Needs Improvement:</strong> ${lowParams.join(", ")}</p>`;
+      if(midParams.length) text += `<p><strong>Moderate Areas:</strong> ${midParams.join(", ")}</p>`;
+      if(highParams.length) text += `<p><strong>Strengths:</strong> ${highParams.join(", ")}</p>`;
+      text += `<p>Focus on the low scoring aspects for a more balanced practice.</p>`;
+      return text;
+    }
+    
+    function generatePersonalizedInsights() {
+      let parameterScores = [];
+      parameters.forEach((param, index) => {
+        const radios = document.getElementsByName("param" + index);
+        let score = 0;
+        radios.forEach(radio => { if (radio.checked) { score = parseInt(radio.value); } });
+        if (score > 0) parameterScores.push({ name: param.name, score: score, category: param.category });
+      });
+      let sortedDescending = [...parameterScores].sort((a, b) => b.score - a.score);
+      let top3 = sortedDescending.slice(0, 3);
+      let sortedAscending = [...parameterScores].sort((a, b) => a.score - b.score);
+      let bottom3 = sortedAscending.slice(0, 3);
+      let actionPlan = "Focus on the low scoring parameters. Consider adopting mindful practices, seeking expert guidance, and tracking your progress consistently.";
+      let html = `<h2>Insights & Personalized Recommendations</h2>`;
+      html += `<div class="insights-section">`;
+      html += `<h3>Strengths</h3>`;
+      html += `<p><strong>Top 3 Strongest Traits:</strong> ${top3.map(p => p.name + " (" + p.score + ")").join(", ")}</p>`;
+      html += `<h3>Areas for Improvement</h3>`;
+      html += `<p><strong>Bottom 3 Weakest Parameters:</strong> ${bottom3.map(p => p.name + " (" + p.score + ")").join(", ")}</p>`;
+      html += `<p><strong>Recommended Action Plan:</strong> ${actionPlan}</p>`;
+      html += `</div>`;
+      document.getElementById("personalizedInsights").innerHTML = html;
+    }
+    
+    // ---------------------- Chart.js Visualization Functions ---------------------- //
+    
+    function generateLineChart(trendData) {
+      let ctx = document.getElementById('lineChart').getContext('2d');
+      let labels = trendData.map(entry => entry.time);
+      let data = trendData.map(entry => entry.score);
+      if (window.lineChartInstance) { window.lineChartInstance.destroy(); }
+      window.lineChartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Overall Score Over Time',
+            data: data,
+            fill: false,
+            borderColor: '#0d6efd',
+            tension: 0.1
+          }]
+        },
+        options: { scales: { y: { beginAtZero: true, max: 10 } } }
+      });
+    }
+    
+    function generateScatterChart(scatterData) {
+      let ctx = document.getElementById('scatterChart').getContext('2d');
+      if (window.scatterChartInstance) { window.scatterChartInstance.destroy(); }
+      window.scatterChartInstance = new Chart(ctx, {
+        type: 'scatter',
+        data: {
+          datasets: [{
+            label: 'Parameter Scores',
+            data: scatterData,
+            backgroundColor: '#0d6efd'
+          }]
+        },
+        options: {
+          scales: {
+            x: { title: { display: true, text: 'Parameter Index' } },
+            y: { title: { display: true, text: 'Score' }, beginAtZero: true, max: 10 }
+          }
+        }
+      });
+    }
+    
+    // ---------------------- Advanced Visualization Functions ---------------------- //
+    
+    function generateChartInterpretations(categoryAverages, trendData, scatterData) {
+      const scoresByCategory = getParameterScores();
+      let barInterp = `<h3>Bar Chart Analysis</h3>`;
+      Object.keys(categoryAverages).forEach(cat => {
+        barInterp += generateCategoryInterpretation(cat, scoresByCategory[cat], categoryAverages[cat]);
+      });
+      document.getElementById("barChartInterpretation").innerHTML = barInterp;
+      
+      let radarInterp = `<h3>Radar Chart Analysis</h3>
+                         <p>The radar chart mirrors the bar chart data. Notice imbalances between categories; focus on areas with lower scores.</p>`;
+      document.getElementById("radarChartInterpretation").innerHTML = radarInterp;
+      
+      let pieInterp = `<h3>Pie Chart Analysis</h3>
+                       <p>This chart shows the proportional contribution of each category to your overall score.</p>`;
+      document.getElementById("pieChartInterpretation").innerHTML = pieInterp;
+      
+      let donutInterp = `<h3>Donut Chart Analysis</h3>
+                         <p>The donut chart displays your overall classification distribution.</p>`;
+      document.getElementById("donutChartInterpretation").innerHTML = donutInterp;
+      
+      let lineInterp = `<h3>Line Chart Analysis</h3>
+                        <p>Your overall score trend over time is depicted in the line chart. Monitor for improvements.</p>`;
+      document.getElementById("lineChartInterpretation").innerHTML = lineInterp;
+      
+      let scatterInterp = `<h3>Scatter Plot Analysis</h3>
+                           <p>The scatter plot displays individual parameter scores. Look for clusters of low scores.</p>`;
+      document.getElementById("scatterChartInterpretation").innerHTML = scatterInterp;
+      
+      let heatmapInterp = `<h3>Heatmap Analysis</h3>
+                           <p>The heatmap highlights your parameter scores with color intensity. Red indicates areas needing attention.</p>`;
+      document.getElementById("heatmapInterpretation").innerHTML = heatmapInterp;
+      
+      let sankeyInterp = `<h3>Sankey Diagram Analysis</h3>
+                          <p>The Sankey diagram visualizes flows between AVAV categories and their influence on overall well-being.</p>`;
+      document.getElementById("sankeyInterpretation").innerHTML = sankeyInterp;
+      
+      let sunburstInterp = `<h3>Sunburst Chart Analysis</h3>
+                            <p>The sunburst chart provides a hierarchical view of your AVAV traits. Smaller arcs indicate areas for improvement.</p>`;
+      document.getElementById("sunburstInterpretation").innerHTML = sunburstInterp;
+    }
+    
+    function getParameterScores() {
+      let scoresByCategory = {
+        "Aahara (Diet & Nutrition)": [],
+        "Vihara (Lifestyle & Daily Routine)": [],
+        "Achara (Conduct, Behavior, and Ethics)": [],
+        "Vichara (Thought Process & Mental Discipline)": []
+      };
+      parameters.forEach((param, index) => {
+        const radios = document.getElementsByName("param" + index);
+        let score = 0;
+        radios.forEach(radio => { if (radio.checked) { score = parseInt(radio.value); } });
+        scoresByCategory[param.category].push({ name: param.name, score: score });
+      });
+      return scoresByCategory;
+    }
+    
+    function generatePersonalizedInsights() {
+      let parameterScores = [];
+      parameters.forEach((param, index) => {
+        const radios = document.getElementsByName("param" + index);
+        let score = 0;
+        radios.forEach(radio => { if (radio.checked) { score = parseInt(radio.value); } });
+        if (score > 0) parameterScores.push({ name: param.name, score: score, category: param.category });
+      });
+      let sortedDescending = [...parameterScores].sort((a, b) => b.score - a.score);
+      let top3 = sortedDescending.slice(0, 3);
+      let sortedAscending = [...parameterScores].sort((a, b) => a.score - b.score);
+      let bottom3 = sortedAscending.slice(0, 3);
+      let actionPlan = "Focus on the low scoring parameters. Consider adopting mindful practices, seeking expert guidance, and tracking your progress consistently.";
+      let html = `<h2>Insights & Personalized Recommendations</h2>`;
+      html += `<div class="insights-section">`;
+      html += `<h3>Strengths</h3>`;
+      html += `<p><strong>Top 3 Strongest Traits:</strong> ${top3.map(p => p.name + " (" + p.score + ")").join(", ")}</p>`;
+      html += `<h3>Areas for Improvement</h3>`;
+      html += `<p><strong>Bottom 3 Weakest Parameters:</strong> ${bottom3.map(p => p.name + " (" + p.score + ")").join(", ")}</p>`;
+      html += `<p><strong>Recommended Action Plan:</strong> ${actionPlan}</p>`;
+      html += `</div>`;
+      document.getElementById("personalizedInsights").innerHTML = html;
+    }
+    
+    // ---------------------- Chart.js Visualization Functions ---------------------- //
+    
+    function generateLineChart(trendData) {
+      let ctx = document.getElementById('lineChart').getContext('2d');
+      let labels = trendData.map(entry => entry.time);
+      let data = trendData.map(entry => entry.score);
+      if (window.lineChartInstance) { window.lineChartInstance.destroy(); }
+      window.lineChartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Overall Score Over Time',
+            data: data,
+            fill: false,
+            borderColor: '#0d6efd',
+            tension: 0.1
+          }]
+        },
+        options: { scales: { y: { beginAtZero: true, max: 10 } } }
+      });
+    }
+    
+    function generateScatterChart(scatterData) {
+      let ctx = document.getElementById('scatterChart').getContext('2d');
+      if (window.scatterChartInstance) { window.scatterChartInstance.destroy(); }
+      window.scatterChartInstance = new Chart(ctx, {
+        type: 'scatter',
+        data: {
+          datasets: [{
+            label: 'Parameter Scores',
+            data: scatterData,
+            backgroundColor: '#0d6efd'
+          }]
+        },
+        options: {
+          scales: {
+            x: { title: { display: true, text: 'Parameter Index' } },
+            y: { title: { display: true, text: 'Score' }, beginAtZero: true, max: 10 }
+          }
+        }
+      });
+    }
+    
+    // ---------------------- Export & Persistence Functions ---------------------- //
+    
+    function downloadCSV() {
+      let csvContent = "data:text/csv;charset=utf-8,Category,Parameter,Score,Weight,Remarks\n";
+      parameters.forEach((param, index) => {
+        let radios = document.getElementsByName("param" + index);
+        let score = "";
+        radios.forEach(radio => { if (radio.checked) { score = radio.value; } });
+        let remark = document.getElementsByName("remark" + index)[0].value;
+        csvContent += `"${param.category}","${param.name}","${score}","${param.weight}","${remark}"\n`;
+      });
+      let encodedUri = encodeURI(csvContent);
+      let link = document.createElement("a");
+      link.setAttribute("href", encodedUri);
+      link.setAttribute("download", "AVAV_Yogic_Traits_Report.csv");
+      document.body.appendChild(link);
+      link.click();
+    }
+    
+    function downloadPDF() {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+      doc.setFontSize(16);
+      doc.text("AVAV Yogic Traits Report", 10, 20);
+      doc.setFontSize(12);
+      let resultText = document.getElementById("result").innerText;
+      let insightsText = document.getElementById("insights").innerText;
+      doc.text(resultText, 10, 30);
+      doc.text(insightsText, 10, 50);
+      doc.save("AVAV_Yogic_Traits_Report.pdf");
+    }
+    
+    function saveData() {
+      let data = [];
+      parameters.forEach((param, index) => {
+        const radios = document.getElementsByName("param" + index);
+        let selectedScore = "";
+        radios.forEach(radio => { if (radio.checked) { selectedScore = radio.value; } });
+        let remark = document.getElementsByName("remark" + index)[0].value;
+        data.push({ score: selectedScore, remark: remark });
+      });
+      localStorage.setItem("avavData", JSON.stringify(data));
+      alert("Data saved successfully!");
+    }
+    
+    function loadData() {
+      let data = JSON.parse(localStorage.getItem("avavData"));
+      if (!data) { alert("No saved data found."); return; }
+      data.forEach((entry, index) => {
+        const radios = document.getElementsByName("param" + index);
+        radios.forEach(radio => { if (radio.value === entry.score) { radio.checked = true; } });
+        document.getElementsByName("remark" + index)[0].value = entry.remark;
+      });
+      alert("Data loaded successfully!");
+    }
+    
+    // ---------------------- Advanced Visualization Functions ---------------------- //
+    
+    function generateChartInterpretations(categoryAverages, trendData, scatterData) {
+      const scoresByCategory = getParameterScores();
+      let barInterp = `<h3>Bar Chart Analysis</h3>`;
+      Object.keys(categoryAverages).forEach(cat => {
+        barInterp += generateCategoryInterpretation(cat, scoresByCategory[cat], categoryAverages[cat]);
+      });
+      document.getElementById("barChartInterpretation").innerHTML = barInterp;
+      
+      let radarInterp = `<h3>Radar Chart Analysis</h3>
+                         <p>The radar chart mirrors the bar chart data. Notice any imbalances and focus on improving low scoring areas.</p>`;
+      document.getElementById("radarChartInterpretation").innerHTML = radarInterp;
+      
+      let pieInterp = `<h3>Pie Chart Analysis</h3>
+                       <p>This chart shows the proportional contribution of each category.</p>`;
+      document.getElementById("pieChartInterpretation").innerHTML = pieInterp;
+      
+      let donutInterp = `<h3>Donut Chart Analysis</h3>
+                         <p>The donut chart displays overall classification distribution.</p>`;
+      document.getElementById("donutChartInterpretation").innerHTML = donutInterp;
+      
+      let lineInterp = `<h3>Line Chart Analysis</h3>
+                        <p>The line chart tracks your overall score trend over time. Monitor changes to adjust your practice.</p>`;
+      document.getElementById("lineChartInterpretation").innerHTML = lineInterp;
+      
+      let scatterInterp = `<h3>Scatter Plot Analysis</h3>
+                           <p>The scatter plot displays individual parameter scores. Clusters of low scores indicate focus areas.</p>`;
+      document.getElementById("scatterChartInterpretation").innerHTML = scatterInterp;
+      
+      let heatmapInterp = `<h3>Heatmap Analysis</h3>
+                           <p>The heatmap highlights your parameter scores with color intensity; red indicates areas needing attention.</p>`;
+      document.getElementById("heatmapInterpretation").innerHTML = heatmapInterp;
+      
+      let sankeyInterp = `<h3>Sankey Diagram Analysis</h3>
+                          <p>The Sankey diagram visualizes flows between your AVAV categories and their influence on overall well-being.</p>`;
+      document.getElementById("sankeyInterpretation").innerHTML = sankeyInterp;
+      
+      let sunburstInterp = `<h3>Sunburst Chart Analysis</h3>
+                            <p>The sunburst chart provides a hierarchical view of your AVAV traits, highlighting areas for improvement.</p>`;
+      document.getElementById("sunburstInterpretation").innerHTML = sunburstInterp;
+    }
+    
+    function getParameterScores() {
+      let scoresByCategory = {
+        "Aahara (Diet & Nutrition)": [],
+        "Vihara (Lifestyle & Daily Routine)": [],
+        "Achara (Conduct, Behavior, and Ethics)": [],
+        "Vichara (Thought Process & Mental Discipline)": []
+      };
+      parameters.forEach((param, index) => {
+        const radios = document.getElementsByName("param" + index);
+        let score = 0;
+        radios.forEach(radio => { if (radio.checked) { score = parseInt(radio.value); } });
+        scoresByCategory[param.category].push({ name: param.name, score: score });
+      });
+      return scoresByCategory;
+    }
+    
+    function generateCategoryInterpretation(category, scores, average) {
+      let lowParams = scores.filter(p => p.score < 5).map(p => p.name);
+      let midParams = scores.filter(p => p.score >= 5 && p.score < 7.5).map(p => p.name);
+      let highParams = scores.filter(p => p.score >= 7.5).map(p => p.name);
+      let text = `<h4>${category} Analysis</h4>`;
+      text += `<p><strong>Average Score:</strong> ${average.toFixed(2)} (${classify(average)})</p>`;
+      if(lowParams.length) text += `<p><strong>Needs Improvement:</strong> ${lowParams.join(", ")}</p>`;
+      if(midParams.length) text += `<p><strong>Moderate Areas:</strong> ${midParams.join(", ")}</p>`;
+      if(highParams.length) text += `<p><strong>Strengths:</strong> ${highParams.join(", ")}</p>`;
+      text += `<p>Focus on the low scoring aspects to enhance overall balance.</p>`;
+      return text;
+    }
+    
+    function generatePersonalizedInsights() {
+      let parameterScores = [];
+      parameters.forEach((param, index) => {
+        const radios = document.getElementsByName("param" + index);
+        let score = 0;
+        radios.forEach(radio => { if (radio.checked) { score = parseInt(radio.value); } });
+        if (score > 0) parameterScores.push({ name: param.name, score: score, category: param.category });
+      });
+      let sortedDescending = [...parameterScores].sort((a, b) => b.score - a.score);
+      let top3 = sortedDescending.slice(0, 3);
+      let sortedAscending = [...parameterScores].sort((a, b) => a.score - b.score);
+      let bottom3 = sortedAscending.slice(0, 3);
+      let actionPlan = "Focus on the low scoring parameters. Consider adopting mindful practices, seeking expert guidance, and tracking your progress consistently.";
+      let html = `<h2>Insights & Personalized Recommendations</h2>`;
+      html += `<div class="insights-section">`;
+      html += `<h3>Strengths</h3>`;
+      html += `<p><strong>Top 3 Strongest Traits:</strong> ${top3.map(p => p.name + " (" + p.score + ")").join(", ")}</p>`;
+      html += `<h3>Areas for Improvement</h3>`;
+      html += `<p><strong>Bottom 3 Weakest Parameters:</strong> ${bottom3.map(p => p.name + " (" + p.score + ")").join(", ")}</p>`;
+      html += `<p><strong>Recommended Action Plan:</strong> ${actionPlan}</p>`;
+      html += `</div>`;
+      document.getElementById("personalizedInsights").innerHTML = html;
+    }
+    
+    // ---------------------- Chart.js Visualization Functions ---------------------- //
+    
+    function generateLineChart(trendData) {
+      let ctx = document.getElementById('lineChart').getContext('2d');
+      let labels = trendData.map(entry => entry.time);
+      let data = trendData.map(entry => entry.score);
+      if (window.lineChartInstance) { window.lineChartInstance.destroy(); }
+      window.lineChartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Overall Score Over Time',
+            data: data,
+            fill: false,
+            borderColor: '#0d6efd',
+            tension: 0.1
+          }]
+        },
+        options: { scales: { y: { beginAtZero: true, max: 10 } } }
+      });
+    }
+    
+    function generateScatterChart(scatterData) {
+      let ctx = document.getElementById('scatterChart').getContext('2d');
+      if (window.scatterChartInstance) { window.scatterChartInstance.destroy(); }
+      window.scatterChartInstance = new Chart(ctx, {
+        type: 'scatter',
+        data: {
+          datasets: [{
+            label: 'Parameter Scores',
+            data: scatterData,
+            backgroundColor: '#0d6efd'
+          }]
+        },
+        options: {
+          scales: {
+            x: { title: { display: true, text: 'Parameter Index' } },
+            y: { title: { display: true, text: 'Score' }, beginAtZero: true, max: 10 }
+          }
+        }
+      });
+    }
+    
+    // ---------------------- Advanced Visualization Functions ---------------------- //
+    
+    function generateBarChart(categoryAverages) {
+      let ctx = document.getElementById('barChart').getContext('2d');
+      let labels = Object.keys(categoryAverages);
+      let data = labels.map(cat => categoryAverages[cat]);
+      if (window.barChartInstance) { window.barChartInstance.destroy(); }
+      window.barChartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Weighted Average Score',
+            data: data,
+            backgroundColor: ['#28a745', '#ffc107', '#17a2b8', '#dc3545']
+          }]
+        },
+        options: { scales: { y: { beginAtZero: true, max: 10 } } }
+      });
+    }
+    
+    function generateRadarChart(categoryAverages) {
+      let ctx = document.getElementById('radarChart').getContext('2d');
+      let labels = Object.keys(categoryAverages);
+      let data = labels.map(cat => categoryAverages[cat]);
+      if (window.radarChartInstance) { window.radarChartInstance.destroy(); }
+      window.radarChartInstance = new Chart(ctx, {
+        type: 'radar',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Weighted Average Score',
+            data: data,
+            backgroundColor: 'rgba(13,110,253,0.2)',
+            borderColor: '#0d6efd',
+            pointBackgroundColor: '#0d6efd'
+          }]
+        },
+        options: { scales: { r: { beginAtZero: true, max: 10 } } }
+      });
+    }
+    
+    function generatePieChart(categoryAverages) {
+      let ctx = document.getElementById('pieChart').getContext('2d');
+      let labels = Object.keys(categoryAverages);
+      let data = labels.map(cat => categoryAverages[cat]);
+      if (window.pieChartInstance) { window.pieChartInstance.destroy(); }
+      window.pieChartInstance = new Chart(ctx, {
+        type: 'pie',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Category Distribution (%)',
+            data: data,
+            backgroundColor: ['#28a745', '#ffc107', '#17a2b8', '#dc3545']
+          }]
+        },
+        options: {
+          plugins: {
+            tooltip: {
+              callbacks: {
+                label: function(context) {
+                  let sum = data.reduce((a, b) => a + b, 0);
+                  let percentage = ((context.parsed / sum) * 100).toFixed(2) + '%';
+                  return context.label + ': ' + percentage;
+                }
+              }
+            }
+          }
+        }
+      });
+    }
+    
+    function generateDonutChart() {
+      let ctx = document.getElementById('donutChart').getContext('2d');
+      // For demonstration, we use dummy classification counts.
+      let classificationCount = { Sattva: 1, Rajas: 1, Tamas: 2 };
+      let labels = Object.keys(classificationCount);
+      let data = labels.map(label => classificationCount[label]);
+      if (window.donutChartInstance) { window.donutChartInstance.destroy(); }
+      window.donutChartInstance = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Classification Distribution',
+            data: data,
+            backgroundColor: ['#28a745', '#ffc107', '#dc3545']
+          }]
+        }
+      });
+    }
+    
+    // ---------------------- Data Persistence & Export ---------------------- //
+    
+    function downloadCSV() {
+      let csvContent = "data:text/csv;charset=utf-8,Category,Parameter,Score,Weight,Remarks\n";
+      parameters.forEach((param, index) => {
+        let radios = document.getElementsByName("param" + index);
+        let score = "";
+        radios.forEach(radio => { if (radio.checked) { score = radio.value; } });
+        let remark = document.getElementsByName("remark" + index)[0].value;
+        csvContent += `"${param.category}","${param.name}","${score}","${param.weight}","${remark}"\n`;
+      });
+      let encodedUri = encodeURI(csvContent);
+      let link = document.createElement("a");
+      link.setAttribute("href", encodedUri);
+      link.setAttribute("download", "AVAV_Yogic_Traits_Report.csv");
+      document.body.appendChild(link);
+      link.click();
+    }
+    
+    function downloadPDF() {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+      doc.setFontSize(16);
+      doc.text("AVAV Yogic Traits Report", 10, 20);
+      doc.setFontSize(12);
+      let resultText = document.getElementById("result").innerText;
+      let insightsText = document.getElementById("insights").innerText;
+      doc.text(resultText, 10, 30);
+      doc.text(insightsText, 10, 50);
+      doc.save("AVAV_Yogic_Traits_Report.pdf");
+    }
+    
+    function saveData() {
+      let data = [];
+      parameters.forEach((param, index) => {
+        const radios = document.getElementsByName("param" + index);
+        let selectedScore = "";
+        radios.forEach(radio => { if (radio.checked) { selectedScore = radio.value; } });
+        let remark = document.getElementsByName("remark" + index)[0].value;
+        data.push({ score: selectedScore, remark: remark });
+      });
+      localStorage.setItem("avavData", JSON.stringify(data));
+      alert("Data saved successfully!");
+    }
+    
+    function loadData() {
+      let data = JSON.parse(localStorage.getItem("avavData"));
+      if (!data) { alert("No saved data found."); return; }
+      data.forEach((entry, index) => {
+        const radios = document.getElementsByName("param" + index);
+        radios.forEach(radio => { if (radio.value === entry.score) { radio.checked = true; } });
+        document.getElementsByName("remark" + index)[0].value = entry.remark;
+      });
+      alert("Data loaded successfully!");
+    }
+    
+    // ---------------------- Main Calculation & Visualization ---------------------- //
+    
+    function calculateScore() {
+      let totalWeighted = 0;
+      let totalWeight = 0;
+      let categoryWeighted = {
+        "Aahara (Diet & Nutrition)": 0,
+        "Vihara (Lifestyle & Daily Routine)": 0,
+        "Achara (Conduct, Behavior, and Ethics)": 0,
+        "Vichara (Thought Process & Mental Discipline)": 0
+      };
+      let scatterData = [];
+      
+      parameters.forEach((param, index) => {
+        const radios = document.getElementsByName("param" + index);
+        let selectedScore = 0;
+        radios.forEach(radio => { if (radio.checked) { selectedScore = parseInt(radio.value); } });
+        scatterData.push({ x: index + 1, y: selectedScore });
+        let weightedScore = selectedScore * param.weight;
+        totalWeighted += weightedScore;
+        totalWeight += (10 * param.weight);
+        categoryWeighted[param.category] += weightedScore;
+      });
+      
+      let overallAvg = (totalWeighted / totalWeight) * 10;
+      let resultText = `<h3>Results</h3>
+                        <p><strong>Total Weighted Score:</strong> ${totalWeighted.toFixed(2)} / ${totalWeight.toFixed(2)}</p>
+                        <p><strong>Overall Classification:</strong> ${classify(overallAvg)} (Weighted Average: ${overallAvg.toFixed(2)})</p>`;
+      
+      let lowestCat = "";
+      let lowestAvg = 11;
+      let categoryAverages = {};
+      Object.keys(categoryWeighted).forEach(cat => {
+        let catTotalWeight = parameters.filter(p => p.category === cat).reduce((sum, p) => sum + p.weight, 0) * 10;
+        let avg = (categoryWeighted[cat] / catTotalWeight) * 10;
+        categoryAverages[cat] = avg;
+        resultText += `<p><strong>${cat}:</strong> ${classify(avg)} (Weighted Average: ${avg.toFixed(2)})</p>`;
+        if (avg < lowestAvg) { lowestAvg = avg; lowestCat = cat; }
+      });
+      
+      document.getElementById("result").innerHTML = resultText;
+      
+      let insightsText = `<h3>Dynamic Insights & Recommendations</h3>
+                          <p>Your lowest scoring category is <strong>${lowestCat}</strong> (Weighted Average: ${lowestAvg.toFixed(2)}). Consider focusing on this area for improvement.</p>`;
+      document.getElementById("insights").innerHTML = insightsText;
+      
+      trendData.push({ time: new Date().toLocaleTimeString(), score: overallAvg });
+      generateBarChart(categoryAverages);
+      generateRadarChart(categoryAverages);
+      generatePieChart(categoryAverages);
+      generateDonutChart();
+      generateLineChart(trendData);
+      generateScatterChart(scatterData);
+      generateHeatmap();
+      generateSankeyDiagram();
+      generateSunburstChart();
+      
+      generateChartInterpretations(categoryAverages, trendData, scatterData);
+      generatePersonalizedInsights();
+    }
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
